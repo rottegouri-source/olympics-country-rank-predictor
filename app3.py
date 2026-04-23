@@ -1,50 +1,30 @@
 import streamlit as st
-import pickle
+import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
 
-# Page config
-st.set_page_config(page_title="Olympics Rank Predictor", page_icon="🏆", layout="wide")
+st.set_page_config(page_title="Olympics Rank Predictor", page_icon="🏆")
 
-# Load model
 @st.cache_resource
-def load_model():
-    with open("model3.pkl", "rb") as file:
-        return pickle.load(file)
+def train_model():
+    df = pd.read_csv("Paris 2024 Olympics Medals and Sports by Country.csv", encoding="latin1")
 
-model = load_model()
+    # If dataset has Rank column
+    X = df[["Gold", "Silver", "Bronze"]]
+    y = df["Rank"]
 
-# Title
+    model = RandomForestRegressor(n_estimators=100, random_state=42)
+    model.fit(X, y)
+    return model
+
+model = train_model()
+
 st.title("🏆 Olympics Country Rank Predictor")
-st.write("Predict Country Rank using Gold, Silver & Bronze Medals")
+st.write("Predict Country Rank using Gold, Silver & Bronze medals")
 
-# Inputs
-col1, col2, col3 = st.columns(3)
+gold = st.number_input("🥇 Gold", min_value=0)
+silver = st.number_input("🥈 Silver", min_value=0)
+bronze = st.number_input("🥉 Bronze", min_value=0)
 
-with col1:
-    gold = st.number_input("🥇 Gold", min_value=0)
-
-with col2:
-    silver = st.number_input("🥈 Silver", min_value=0)
-
-with col3:
-    bronze = st.number_input("🥉 Bronze", min_value=0)
-
-# Predict
-if st.button("🔍 Predict Rank"):
+if st.button("Predict Rank"):
     rank = round(model.predict([[gold, silver, bronze]])[0])
-
-    st.success(f"🏆 Predicted Country Rank: {rank}")
-
-    if rank == 1:
-        st.balloons()
-        st.success("🥇 Olympic Champion!")
-    elif rank <= 3:
-        st.success("🏅 Podium Finish")
-    elif rank <= 10:
-        st.info("🎖️ Top 10 Country")
-    elif rank <= 20:
-        st.warning("⭐ Competitive Rank")
-    else:
-        st.error("🌍 Lower Rank")
-
-st.write("---")
-st.caption("Developed by Gouri Rotte")
+    st.success(f"🏆 Predicted Rank: {rank}")
